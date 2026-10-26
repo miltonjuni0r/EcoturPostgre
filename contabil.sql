@@ -1,40 +1,11 @@
+-- ============================================================
+-- EcoTurismo - Schema contabil
+-- PostgreSQL
 --
--- PostgreSQL database dump
---
+-- ============================================================
 
-\restrict nwLZqduvgxStGigdxRDtAAQ6Dsgyas7B5ItmRUTOnEkfXgFkZWbXgsgN0deCo7E
-
--- Dumped from database version 18.4
--- Dumped by pg_dump version 18.4
-
--- Started on 2026-09-30 15:42:51
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- TOC entry 7 (class 2615 OID 25112)
--- Name: contabil; Type: SCHEMA; Schema: -; Owner: postgres
---
-
-CREATE SCHEMA contabil;
-
-
-ALTER SCHEMA contabil OWNER TO postgres;
-
---
--- TOC entry 865 (class 1247 OID 25115)
--- Name: forma; Type: TYPE; Schema: contabil; Owner: postgres
---
+-- 1. Schema e tipo de pagamento
+CREATE SCHEMA IF NOT EXISTS contabil;
 
 CREATE TYPE contabil.forma AS ENUM (
     'PIX',
@@ -43,33 +14,7 @@ CREATE TYPE contabil.forma AS ENUM (
     'A_VISTA'
 );
 
-
-ALTER TYPE contabil.forma OWNER TO postgres;
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
---
--- TOC entry 229 (class 1259 OID 25165)
--- Name: pagamentos; Type: TABLE; Schema: contabil; Owner: postgres
---
-
-CREATE TABLE contabil.pagamentos (
-    id_pagamentos integer NOT NULL,
-    data_pagamento date NOT NULL,
-    forma contabil.forma,
-    id_reserva integer NOT NULL
-);
-
-
-ALTER TABLE contabil.pagamentos OWNER TO postgres;
-
---
--- TOC entry 228 (class 1259 OID 25164)
--- Name: pagamentos_id_pagamentos_seq; Type: SEQUENCE; Schema: contabil; Owner: postgres
---
-
+-- 2. Sequência usada para gerar os IDs dos pagamentos
 CREATE SEQUENCE contabil.pagamentos_id_pagamentos_seq
     AS integer
     START WITH 1
@@ -78,84 +23,68 @@ CREATE SEQUENCE contabil.pagamentos_id_pagamentos_seq
     NO MAXVALUE
     CACHE 1;
 
+-- 3. Tabela de pagamentos
+CREATE TABLE contabil.pagamentos (
+    id_pagamentos integer NOT NULL
+        DEFAULT nextval('contabil.pagamentos_id_pagamentos_seq'::regclass),
+    data_pagamento date NOT NULL,
+    forma contabil.forma,
+    id_reserva integer NOT NULL,
 
-ALTER SEQUENCE contabil.pagamentos_id_pagamentos_seq OWNER TO postgres;
+    CONSTRAINT pagamentos_pkey
+        PRIMARY KEY (id_pagamentos),
 
---
--- TOC entry 5045 (class 0 OID 0)
--- Dependencies: 228
--- Name: pagamentos_id_pagamentos_seq; Type: SEQUENCE OWNED BY; Schema: contabil; Owner: postgres
---
+    CONSTRAINT fk_pagamento_reserva
+        FOREIGN KEY (id_reserva)
+        REFERENCES site.reservas (id_reserva)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
 
-ALTER SEQUENCE contabil.pagamentos_id_pagamentos_seq OWNED BY contabil.pagamentos.id_pagamentos;
+ALTER SEQUENCE contabil.pagamentos_id_pagamentos_seq
+    OWNED BY contabil.pagamentos.id_pagamentos;
 
-
---
--- TOC entry 232 (class 1259 OID 25200)
--- Name: vw_relatorio_financeiro; Type: VIEW; Schema: contabil; Owner: postgres
---
-
-CREATE VIEW contabil.vw_relatorio_financeiro AS
- SELECT p.id_pagamentos,
+-- 4. View do relatório financeiro
+CREATE OR REPLACE VIEW contabil.vw_relatorio_financeiro AS
+SELECT
+    p.id_pagamentos,
     p.data_pagamento,
     p.forma,
     r.status AS status_reserva,
     pac.preco AS valor_recebido
-   FROM ((contabil.pagamentos p
-     JOIN site.reservas r ON ((p.id_reserva = r.id_reserva)))
-     JOIN site.pacotes pac ON ((r.fk_local = pac.id_pacotes)));
+FROM contabil.pagamentos AS p
+INNER JOIN site.reservas AS r
+    ON p.id_reserva = r.id_reserva
+INNER JOIN site.pacotes AS pac
+    ON r.fk_local = pac.id_pacotes;
 
+-- 5. Função para validar o pagamento
+-- Impede inserir ou transferir um pagamento para uma reserva cancelada.
+CREATE OR REPLACE FUNCTION contabil.fn_validar_pagamento_reserva()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_status_reserva VARCHAR(255);
+BEGIN
+    SELECT status
+      INTO v_status_reserva
+      FROM site.reservas
+     WHERE id_reserva = NEW.id_reserva;
 
-ALTER VIEW contabil.vw_relatorio_financeiro OWNER TO postgres;
+    IF v_status_reserva = 'Cancelada' THEN
+        RAISE EXCEPTION
+            'Não é possível registrar ou transferir um pagamento para a reserva % porque ela está cancelada.',
+            NEW.id_reserva;
+    END IF;
 
---
--- TOC entry 4884 (class 2604 OID 25168)
--- Name: pagamentos id_pagamentos; Type: DEFAULT; Schema: contabil; Owner: postgres
---
+    RETURN NEW;
+END;
+$$;
 
-ALTER TABLE ONLY contabil.pagamentos ALTER COLUMN id_pagamentos SET DEFAULT nextval('contabil.pagamentos_id_pagamentos_seq'::regclass);
+-- 6. Trigger de validação, antes de inserir ou trocar a reserva do pagamento
+DROP TRIGGER IF EXISTS trg_validar_pagamento_reserva
+    ON contabil.pagamentos;
 
-
---
--- TOC entry 5039 (class 0 OID 25165)
--- Dependencies: 229
--- Data for Name: pagamentos; Type: TABLE DATA; Schema: contabil; Owner: postgres
---
-
-
-
---
--- TOC entry 5046 (class 0 OID 0)
--- Dependencies: 228
--- Name: pagamentos_id_pagamentos_seq; Type: SEQUENCE SET; Schema: contabil; Owner: postgres
---
-
-SELECT pg_catalog.setval('contabil.pagamentos_id_pagamentos_seq', 1, false);
-
-
---
--- TOC entry 4886 (class 2606 OID 25173)
--- Name: pagamentos pagamentos_pkey; Type: CONSTRAINT; Schema: contabil; Owner: postgres
---
-
-ALTER TABLE ONLY contabil.pagamentos
-    ADD CONSTRAINT pagamentos_pkey PRIMARY KEY (id_pagamentos);
-
-
---
--- TOC entry 4887 (class 2606 OID 25187)
--- Name: pagamentos fk_pagamento_reserva; Type: FK CONSTRAINT; Schema: contabil; Owner: postgres
---
-
-ALTER TABLE ONLY contabil.pagamentos
-    ADD CONSTRAINT fk_pagamento_reserva FOREIGN KEY (id_reserva) REFERENCES site.reservas(id_reserva) ON UPDATE CASCADE ON DELETE RESTRICT;
-
-
--- Completed on 2026-09-30 15:42:52
-
---
--- PostgreSQL database dump complete
---
-
-\unrestrict nwLZqduvgxStGigdxRDtAAQ6Dsgyas7B5ItmRUTOnEkfXgFkZWbXgsgN0deCo7E
-
+CREATE TRIGGER trg_validar_pagamento_reserva
+BEFORE INSERT OR UPDATE OF id_reserva
