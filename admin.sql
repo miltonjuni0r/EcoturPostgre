@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict IJF9PkIVmsWPDb5OCtILhELm2WKItE7jmKag99FZdG2ALag62xyZ8dxf6XIrV3Z
+\restrict OokkiGwhBvcaj7RHoYx0ScNPbxc6whU46UO03sUBSSK5sbOUVRF8A1GXWE4hMQD
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-09-30 15:42:23
+-- Started on 2026-11-13 17:01:43
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -70,7 +70,7 @@ CREATE SEQUENCE admin.usuarios_id_usuarios_seq
 ALTER SEQUENCE admin.usuarios_id_usuarios_seq OWNER TO postgres;
 
 --
--- TOC entry 5044 (class 0 OID 0)
+-- TOC entry 5063 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: usuarios_id_usuarios_seq; Type: SEQUENCE OWNED BY; Schema: admin; Owner: postgres
 --
@@ -79,7 +79,7 @@ ALTER SEQUENCE admin.usuarios_id_usuarios_seq OWNED BY admin.usuarios.id_usuario
 
 
 --
--- TOC entry 4882 (class 2604 OID 25127)
+-- TOC entry 4901 (class 2604 OID 25127)
 -- Name: usuarios id_usuarios; Type: DEFAULT; Schema: admin; Owner: postgres
 --
 
@@ -87,7 +87,7 @@ ALTER TABLE ONLY admin.usuarios ALTER COLUMN id_usuarios SET DEFAULT nextval('ad
 
 
 --
--- TOC entry 5038 (class 0 OID 25124)
+-- TOC entry 5057 (class 0 OID 25124)
 -- Dependencies: 223
 -- Data for Name: usuarios; Type: TABLE DATA; Schema: admin; Owner: postgres
 --
@@ -97,7 +97,7 @@ INSERT INTO admin.usuarios VALUES (2, 'James', '4444', '3289771213', '2222222222
 
 
 --
--- TOC entry 5045 (class 0 OID 0)
+-- TOC entry 5064 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: usuarios_id_usuarios_seq; Type: SEQUENCE SET; Schema: admin; Owner: postgres
 --
@@ -106,7 +106,7 @@ SELECT pg_catalog.setval('admin.usuarios_id_usuarios_seq', 2, true);
 
 
 --
--- TOC entry 4886 (class 2606 OID 25138)
+-- TOC entry 4905 (class 2606 OID 25138)
 -- Name: usuarios usuarios_pkey; Type: CONSTRAINT; Schema: admin; Owner: postgres
 --
 
@@ -114,11 +114,10 @@ ALTER TABLE ONLY admin.usuarios
     ADD CONSTRAINT usuarios_pkey PRIMARY KEY (id_usuarios);
 
 
--- Completed on 2026-09-30 15:42:30
+-- Completed on 2026-11-13 17:01:44
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IJF9PkIVmsWPDb5OCtILhELm2WKItE7jmKag99FZdG2ALag62xyZ8dxf6XIrV3Z
-
+\unrestrict OokkiGwhBvcaj7RHoYx0ScNPbxc6whU46UO03sUBSSK5sbOUVRF8A1GXWE4hMQD
