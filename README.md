@@ -7,7 +7,7 @@ A ordem de execução obrigatoriamente deve ser:
 Criação do schema admin.
 Tabela admin.usuarios + validação de CPF (CHECK).
 
-3) site.sql
+02) site.sql
 
 Criação do schema site.
 Tabelas site.pacotes e site.reservas.
